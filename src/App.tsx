@@ -1,25 +1,43 @@
 import type { Component } from 'solid-js';
 
-import logo from './logo.svg';
-import styles from './App.module.css';
+// @ts-ignore
+// import MonacoEditor from 'solidjs-monaco-editor-component'
+
+import MyCustomMonaco from './Monaco'
+import FileTree from './FileTree.jsx'
+
+const value = `<?php
+phpinfo();
+`
 
 const App: Component = () => {
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <img src={logo} class={styles.logo} alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          class={styles.link}
-          href="https://github.com/solidjs/solid"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn Solid
-        </a>
-      </header>
+    <div style={{height:'100vh', display:'flex', "flex-direction":'row', "align-content":'stretch'}}>
+      <div style={{width: '200px'}}>
+        <FileTree tree={[
+          {type: 'dir', name: 'src', children: [
+            {type: 'dir', name: 'docs', children: [
+              {type: 'file', name: 'index.md'},
+            ]},
+            {type: 'file', name: 'main.js'},
+          ]},
+          {type: 'file', name: 'index.php'},
+          {type: 'file', name: 'index.js'},
+          {type: 'file', name: 'contact.php'},
+          {type: 'file', name: 'package.json'},
+        ]} />
+      </div>
+      <div style={{'flex-grow': 1}}>
+        <MyCustomMonaco
+          options={{
+            value,
+            theme:'vs-dark',
+            minimap: {
+              enabled: true,
+            },
+          }}
+        />
+      </div>
     </div>
   );
 };
