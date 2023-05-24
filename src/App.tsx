@@ -1,31 +1,34 @@
 import type { Component } from 'solid-js';
+import { createStore } from 'solid-js/store';
 
 // @ts-ignore
-// import MonacoEditor from 'solidjs-monaco-editor-component'
-
 import MyCustomMonaco from './Monaco'
-import FileTree from './FileTree.jsx'
+// @ts-ignore
+import FileTree from './FileTree'
 
 const value = `<?php
 phpinfo();
 `
 
 const App: Component = () => {
+  const defaultFileAttrs = { open: false, selected: false, children: [] };
+  const [state, setState] = createStore([
+    {type: 'dir', name: 'src', path:'src', ...defaultFileAttrs, children: [
+      {type: 'dir', name: 'docs', path:'src/docs', ...defaultFileAttrs, children: [
+        {type: 'file', name: 'index.md', path:'src/docs/index.md', ...defaultFileAttrs},
+      ]},
+      {type: 'file', name: 'main.js', path:'src/main.js', ...defaultFileAttrs},
+    ]},
+    {type: 'file', name: 'index.php', path:'index.php', ...defaultFileAttrs},
+    {type: 'file', name: 'index.js', path:'index.js', ...defaultFileAttrs},
+    {type: 'file', name: 'contact.php', path:'contact.php', ...defaultFileAttrs},
+    {type: 'file', name: 'package.json', path:'package.json', ...defaultFileAttrs},
+  ]);
+  
   return (
     <div style={{height:'100vh', display:'flex', "flex-direction":'row', "align-content":'stretch'}}>
-      <div style={{width: '200px'}}>
-        <FileTree tree={[
-          {type: 'dir', name: 'src', children: [
-            {type: 'dir', name: 'docs', children: [
-              {type: 'file', name: 'index.md'},
-            ]},
-            {type: 'file', name: 'main.js'},
-          ]},
-          {type: 'file', name: 'index.php'},
-          {type: 'file', name: 'index.js'},
-          {type: 'file', name: 'contact.php'},
-          {type: 'file', name: 'package.json'},
-        ]} />
+      <div style={{width: '200px', display:'flex', "flex-direction":'column', "align-content":'stretch'}}>
+        <FileTree state={state} setState={setState} />
       </div>
       <div style={{'flex-grow': 1}}>
         <MyCustomMonaco
