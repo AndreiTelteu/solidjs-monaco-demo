@@ -1,4 +1,4 @@
-import { createSignal, mergeProps, onMount } from "solid-js";
+import { createEffect, createSignal, mergeProps, onMount } from "solid-js";
 import * as monaco from "monaco-editor";
 
 export default function Monaco(props) {
@@ -26,11 +26,16 @@ export default function Monaco(props) {
     // editorObj.updateOptions({
     //   cursorBlinking: '', //'blink' | 'smooth' | 'phase' | 'expand' | 'solid';
     // });
-    editorObj.setValue(content())
-    editorObj.onKeyUp(() => {
-      const editorContent = editorObj.getValue();
-      setContent(editorContent)
-    });
+    // editorObj.setValue(content())
+    // editorObj.onKeyUp(() => {
+    //   const editorContent = editorObj.getValue();
+    //   setContent(editorContent)
+    // });
+  })
+
+  createEffect(() => {
+    props.value?.();
+    editorObj.setValue(props.value?.() || '')
   })
 
   let editorObj;
