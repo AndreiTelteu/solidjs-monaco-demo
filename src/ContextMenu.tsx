@@ -1,16 +1,44 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
+
+type ContextOption =
+    | {
+          type: "option";
+          label: string;
+          onClick: () => void;
+          disabled?: boolean;
+      }
+    | { type: "separator" };
+
+type ContextState =
+    | {
+          open: false;
+          top?: number;
+          left?: number;
+          options?: ContextOption[];
+      }
+    | {
+          open: true;
+          top: number;
+          left: number;
+          options: ContextOption[];
+      };
+
+export type ContextRef = {
+    set: (props: ContextState) => void;
+};
 
 export default function ContextMenu(props) {
-    const [state, setState] = createSignal({
+    const [state, setState] = createSignal<ContextState>({
         open: false,
         top: 0,
         left: 0,
+        options: [],
     });
 
     if (props.ref) {
         props.ref({
-            open: (newState) => {
-                console.log("context open", newState);
+            set: ({ open, top = 0, left = 0, options = [] }: ContextState) => {
+                let newState = { open, top, left, options };
                 setState(newState);
             },
         });
@@ -18,6 +46,22 @@ export default function ContextMenu(props) {
 
     return (
         <Show when={state().open}>
+            <div
+                class="context-background"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    e.stopPropagation();
+                    setState({ open: false });
+                }}
+                style={{
+                    position: "absolute",
+                    top: "0px",
+                    left: "0px",
+                    bottom: "0px",
+                    right: "0px",
+                }}
+            />
             <div
                 class="monaco-editor"
                 style={{
@@ -53,48 +97,64 @@ export default function ContextMenu(props) {
                                 role="menu"
                                 tabindex="0"
                             >
-                                <li
-                                    class="action-item disabled"
-                                    role="presentation"
-                                    title=""
-                                >
-                                    <a
-                                        class="action-label codicon separator disabled"
-                                        role="presentation"
-                                        aria-disabled="true"
-                                        aria-label=""
-                                        style="border-bottom-color: var(--vscode-menu-separatorBackground)"
-                                    ></a>
-                                </li>
-                                <li class="action-item" role="presentation">
+                                <For each={state()?.options || []}>
+                                    {(item) =>
+                                        item.type == "separator" ? (
+                                            <li
+                                                class="action-item disabled"
+                                                role="presentation"
+                                                title=""
+                                            >
+                                                <a
+                                                    class="action-label codicon separator disabled"
+                                                    role="presentation"
+                                                    aria-disabled="true"
+                                                    aria-label=""
+                                                    style="border-bottom-color: var(--vscode-menu-separatorBackground)"
+                                                ></a>
+                                            </li>
+                                        ) : item.type == "option" ? (
+                                            <li
+                                                class={`action-item ${
+                                                    item.disabled
+                                                        ? "disabled"
+                                                        : ""
+                                                }`}
+                                                role="presentation"
+                                                onClick={(e: MouseEvent) =>
+                                                    item.onClick()
+                                                }
+                                            >
+                                                <a
+                                                    class="action-menu-item"
+                                                    role="menuitem"
+                                                    tabindex="0"
+                                                    aria-posinset="2"
+                                                    aria-setsize="5"
+                                                    style="color: var(--vscode-menu-foreground)"
+                                                >
+                                                    <span
+                                                        class="menu-item-check codicon codicon-menu-selection"
+                                                        role="none"
+                                                        style="color: var(--vscode-menu-foreground)"
+                                                    ></span>
+                                                    <span
+                                                        class="action-label"
+                                                        aria-label="Cut"
+                                                    >
+                                                        {item.label}
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        ) : null
+                                    }
+                                </For>
+
+                                {/* <li class="action-item" role="presentation">
                                     <a
                                         class="action-menu-item"
                                         role="menuitem"
                                         tabindex="0"
-                                        aria-checked=""
-                                        aria-posinset="2"
-                                        aria-setsize="5"
-                                        style="color: var(--vscode-menu-foreground)"
-                                    >
-                                        <span
-                                            class="menu-item-check codicon codicon-menu-selection"
-                                            role="none"
-                                            style="color: var(--vscode-menu-foreground)"
-                                        ></span>
-                                        <span
-                                            class="action-label"
-                                            aria-label="Cut"
-                                        >
-                                            Cut
-                                        </span>
-                                    </a>
-                                </li>
-                                <li class="action-item" role="presentation">
-                                    <a
-                                        class="action-menu-item"
-                                        role="menuitem"
-                                        tabindex="0"
-                                        aria-checked=""
                                         aria-posinset="3"
                                         aria-setsize="5"
                                         style="color: var(--vscode-menu-foreground)"
@@ -117,7 +177,6 @@ export default function ContextMenu(props) {
                                         class="action-menu-item"
                                         role="menuitem"
                                         tabindex="0"
-                                        aria-checked=""
                                         aria-posinset="4"
                                         aria-setsize="5"
                                         style="color: var(--vscode-menu-foreground)"
@@ -147,7 +206,7 @@ export default function ContextMenu(props) {
                                         aria-label=""
                                         style="border-bottom-color: var(--vscode-menu-separatorBackground)"
                                     ></a>
-                                </li>
+                                </li> */}
                             </ul>
                         </div>
                     </div>

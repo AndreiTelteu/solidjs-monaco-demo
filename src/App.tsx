@@ -6,10 +6,10 @@ import MyCustomMonaco from "./Monaco";
 // @ts-ignore
 import FileTree from "./FileTree";
 // @ts-ignore
-import ContextMenu from "./ContextMenu";
+import ContextMenu, { ContextRef } from "./ContextMenu";
 
 const App: Component = () => {
-    let context;
+    let context: ContextRef;
     const [value, setValue] = createSignal(`<?php
 phpinfo();
 `);
@@ -68,6 +68,70 @@ phpinfo();
     //         capturecon();
     //     }, 1000);
     // });
+    const onContextClick = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        context?.set({
+            open: true,
+            top: e.clientY,
+            left: e.clientX,
+            options: [
+                {
+                    type: "option",
+                    label: "New file",
+                    onClick: () => {
+                        console.log("new file");
+                    },
+                },
+                {
+                    type: "option",
+                    label: "New folder",
+                    onClick: () => {
+                        console.log("new folder");
+                    },
+                },
+                { type: "separator" },
+                {
+                    type: "option",
+                    label: "Cut",
+                    onClick: () => {},
+                },
+                {
+                    type: "option",
+                    label: "Copy",
+                    onClick: () => {},
+                },
+                {
+                    type: "option",
+                    label: "Paste",
+                    disabled: true,
+                    onClick: () => {},
+                },
+                { type: "separator" },
+                {
+                    type: "option",
+                    label: "Download...",
+                    onClick: () => {},
+                },
+                {
+                    type: "option",
+                    label: "Upload...",
+                    onClick: () => {},
+                },
+                { type: "separator" },
+                {
+                    type: "option",
+                    label: "Rename...",
+                    onClick: () => {},
+                },
+                {
+                    type: "option",
+                    label: "Delete permanently",
+                    onClick: () => {},
+                },
+            ],
+        });
+    };
 
     return (
         <div
@@ -76,7 +140,11 @@ phpinfo();
                 display: "flex",
                 "flex-direction": "row",
                 "align-content": "stretch",
+                overflow: "hidden",
+                position: "relative",
             }}
+            onContextMenu={onContextClick}
+            onClick={(e) => context?.set({ open: false })}
         >
             <ContextMenu ref={context} />
             <div
@@ -85,14 +153,6 @@ phpinfo();
                     display: "flex",
                     "flex-direction": "column",
                     "align-content": "stretch",
-                }}
-                onClick={(e: MouseEvent) => {
-                    console.log("parent click", e);
-                    context?.open({
-                        open: true,
-                        top: e.clientY,
-                        left: e.clientX,
-                    });
                 }}
             >
                 <FileTree state={state} setState={setState} />
