@@ -1,12 +1,11 @@
 import { Component, createSignal, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, produce } from "solid-js/store";
 
 // @ts-ignore
 import MyCustomMonaco from "./Monaco";
-// @ts-ignore
-import FileTree from "./FileTree";
-// @ts-ignore
+import FileTree, { FileItem } from "./FileTree";
 import ContextMenu, { ContextRef } from "./ContextMenu";
+import Tabs, { TabItem } from "./Tabs";
 
 const App: Component = () => {
     let context: ContextRef;
@@ -14,7 +13,7 @@ const App: Component = () => {
 phpinfo();
 `);
     const defaultFileAttrs = { open: false, selected: false };
-    const [state, setState] = createStore([
+    const [files, setFiles] = createStore<FileItem[]>([
         { type: "dir", name: "src", path: "src/", ...defaultFileAttrs },
         { type: "dir", name: "docs", path: "src/docs/", ...defaultFileAttrs },
         {
@@ -37,8 +36,8 @@ phpinfo();
         },
         {
             type: "file",
-            name: "index.js",
-            path: "index.js",
+            name: "Tabs.tsx",
+            path: "Tabs.tsx",
             ...defaultFileAttrs,
         },
         {
@@ -54,6 +53,9 @@ phpinfo();
             ...defaultFileAttrs,
         },
     ]);
+
+    const [tabs, setTabs] = createStore<TabItem[]>([]);
+
     // const capturecon = () => {
     //     const root = document.querySelector(".shadow-root-host");
     //     const context = root?.shadowRoot?.querySelector(
@@ -68,6 +70,7 @@ phpinfo();
     //         capturecon();
     //     }, 1000);
     // });
+
     const onContextClick = (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -155,9 +158,47 @@ phpinfo();
                     "align-content": "stretch",
                 }}
             >
-                <FileTree state={state} setState={setState} />
+                <FileTree
+                    state={files}
+                    setState={setFiles}
+                    onSelectItem={(item: FileItem) => {
+                        setTabs({}, "selected", false);
+                        setTabs(
+                            produce((v: TabItem[]) => {
+                                v.forEach((i) => (i.selected = false));
+                                let alreadyOpened = v.findIndex(
+                                    (f) => f.path == item.path
+                                );
+                                if (alreadyOpened !== -1) {
+                                    v[alreadyOpened].selected = true;
+                                    // TODO: doubleclick should make fixed true here
+                                    return;
+                                }
+                                let notFixedItem = v.findIndex(
+                                    (f) => f.fixed == false
+                                );
+                                if (notFixedItem !== -1) {
+                                    v[notFixedItem] = {
+                                        name: item.name,
+                                        path: item.path,
+                                        selected: true,
+                                        fixed: false,
+                                    };
+                                    return;
+                                }
+                                v.push({
+                                    name: item.name,
+                                    path: item.path,
+                                    selected: true,
+                                    fixed: false,
+                                });
+                            })
+                        );
+                    }}
+                />
             </div>
             <div style={{ "flex-grow": 1 }}>
+                <Tabs state={tabs} setState={setTabs} />
                 <MyCustomMonaco
                     value={value}
                     options={{

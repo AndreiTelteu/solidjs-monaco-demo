@@ -35,6 +35,15 @@ export default function ContextMenu(props) {
         options: [],
     });
 
+    const close = (e = null) => {
+        if (e !== null) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+        }
+        setState({ open: false });
+    };
+
     if (props.ref) {
         props.ref({
             set: ({ open, top = 0, left = 0, options = [] }: ContextState) => {
@@ -48,18 +57,15 @@ export default function ContextMenu(props) {
         <Show when={state().open}>
             <div
                 class="context-background"
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
-                    e.stopPropagation();
-                    setState({ open: false });
-                }}
+                onClick={close}
+                onContextMenu={close}
                 style={{
                     position: "absolute",
                     top: "0px",
                     left: "0px",
                     bottom: "0px",
                     right: "0px",
+                    "z-index": 99999,
                 }}
             />
             <div
@@ -71,9 +77,7 @@ export default function ContextMenu(props) {
                     "z-index": 100000,
                 }}
             >
-                <style type="text/css" media="screen">
-                    {styles}
-                </style>
+                <style type="text/css">{styles}</style>
                 <div
                     class="monaco-scrollable-element"
                     role="presentation"
@@ -501,12 +505,6 @@ const styles = `
     font-size: 60%;
     padding: 0 1.8em;
 }
-.linux .monaco-menu .monaco-action-bar.vertical .submenu-indicator {
-:host-context(.linux) .monaco-menu .monaco-action-bar.vertical .submenu-indicator {
-    height: 100%;
-    mask-size: 10px 10px;
-    -webkit-mask-size: 10px 10px;
-}
 .monaco-menu .action-item {
     cursor: default;
 }
@@ -575,5 +573,8 @@ const styles = `
 }
 .monaco-scrollable-element > .scrollbar > .slider.active {
     background: var(--vscode-scrollbarSlider-activeBackground);
+}
+.monaco-menu .monaco-action-bar .action-menu-item:hover {
+    background-color: var(--vscode-quickInputList-focusBackground);
 }
 `;
