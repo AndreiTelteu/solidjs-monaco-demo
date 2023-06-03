@@ -37,8 +37,9 @@ export default function Tabs(props: {
                         <TabItemElement
                             class={`tab-item-element ${
                                 item.selected ? "is-selected" : ""
+                            } ${!item.fixed ? "is-not-fixed" : ""} ${
+                                item.dirty ? "is-dirty" : ""
                             }`}
-                            selected={item.selected}
                             onAuxClick={(e) => {
                                 // middle click close tab
                                 e.preventDefault();
@@ -96,23 +97,22 @@ export const TabBar = styled("div")({
     background: "rgb(37, 37, 38)",
 });
 
-export const TabItemElement = styled("button")(
-    (props: { selected?: boolean }) => ({
-        appearance: "none",
-        display: "inline-block",
-        fontSize: "14px",
-        background: "rgb(45, 45, 45)",
-        color: "var(--vscode-foreground)",
-        padding: "4px 8px",
-        border: "none",
-        ...(props.selected
-            ? {
-                  background: "var(--vscode-editor-background)",
-                  color: "#fff",
-              }
-            : {}),
-    })
-);
+export const TabItemElement = styled("button")({
+    appearance: "none",
+    display: "inline-block",
+    fontSize: "14px",
+    background: "rgb(45, 45, 45)",
+    color: "var(--vscode-foreground)",
+    padding: "4px 8px",
+    border: "none",
+    ["&.is-selected"]: {
+        background: "var(--vscode-editor-background)",
+        color: "#fff",
+    },
+    ["&.is-not-fixed"]: {
+        fontStyle: "italic",
+    },
+});
 
 export const TabClose = styled("button")({
     appearance: "none",
@@ -124,16 +124,29 @@ export const TabClose = styled("button")({
     borderRadius: "6px",
     background: "rgba(255, 255, 255, 0)",
     color: "var(--vscode-foreground)",
+    width: "20px",
+    textAlign: "center",
     opacity: 0,
-    "&::before": {
-        content: `' \\2716'`,
-        fontSize: "14px",
-    },
     "&:hover": {
         background: "rgba(255, 255, 255, 0.15)",
         color: "#fff",
     },
+    "&::before": {
+        content: `'\\2716'`, // close
+        fontSize: "14px",
+    },
     [`.tab-item-element:hover &, .tab-item-element.is-selected &`]: {
         opacity: 1,
+    },
+    ".tab-item-element.is-dirty &": {
+        opacity: 1,
+        "&::before": {
+            content: `'\\25CF'`, // bullet
+            fontSize: "16px",
+        },
+        "&:hover::before": {
+            content: `'\\2716'`, // close
+            fontSize: "14px",
+        },
     },
 });
