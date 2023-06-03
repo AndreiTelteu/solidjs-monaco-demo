@@ -14,17 +14,47 @@ export default function Tabs(props: {
     state: TabItem[];
     setState: SetStoreFunction<TabItem[]>;
 }) {
+    const close = (item: TabItem, index: number) => {
+        let newIndex = -1;
+        props.setState(
+            produce((v: TabItem[]) => {
+                if (item.selected) {
+                    newIndex = Math.max(0, index - 1);
+                }
+                v.splice(index, 1);
+                if (v.length > 0 && newIndex < v.length && newIndex !== -1) {
+                    v[newIndex].selected = true;
+                }
+            })
+        );
+    };
+
     return (
         <div class="monaco-editor">
             <TabBar>
                 <For each={props.state}>
-                    {(item) => (
+                    {(item, index) => (
                         <TabItemElement
                             class={`tab-item-element ${
                                 item.selected ? "is-selected" : ""
                             }`}
                             selected={item.selected}
+                            onAuxClick={(e) => {
+                                // middle click close tab
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                close(item, index());
+                            }}
                             onClick={(e) => {
+                                if (e.which == 2) {
+                                    // safari still uses which==2 instead of onAuxClick
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    close(item, index());
+                                    return;
+                                }
                                 props.setState({}, "selected", false);
                                 props.setState(
                                     (i) => i.path == item.path,
@@ -47,17 +77,11 @@ export default function Tabs(props: {
                             {item.name}-{item.fixed ? "F" : "!f"}-
                             {item.dirty ? "D" : "!d"}
                             <TabClose
-                                onClick={() => {
-                                    props.setState(
-                                        produce((v: TabItem[]) => {
-                                            let index = v.findIndex(
-                                                (i) => i.path == item.path
-                                            );
-                                            if (index !== -1) {
-                                                v.splice(index, 1);
-                                            }
-                                        })
-                                    );
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    close(item, index());
                                 }}
                             />
                         </TabItemElement>

@@ -2,13 +2,14 @@ import { Component, createSignal, For, Index, onMount, Show } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 
 // @ts-ignore
-import MyCustomMonaco from "./Monaco";
+import MyCustomMonaco, { EditorRef } from "./Monaco";
 import FileTree, { FileItem } from "./FileTree";
 import ContextMenu, { ContextRef } from "./ContextMenu";
 import Tabs, { TabItem } from "./Tabs";
 
 const App: Component = () => {
     let context: ContextRef;
+    let editorRef: { [key: number]: EditorRef } = {};
     const defaultFileAttrs = { open: false, selected: false };
     const [files, setFiles] = createStore<FileItem[]>([
         { type: "dir", name: "src", path: "src/", ...defaultFileAttrs },
@@ -145,11 +146,33 @@ const App: Component = () => {
             }}
             onContextMenu={onContextClick}
             onClick={(e) => context?.set({ open: false })}
+            onKeyDown={(e) => {
+                if (e.ctrlKey && e.key === "s") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    let selectedTabIndex = tabs.findIndex(
+                        (i) => i.selected == true
+                    );
+                    if (
+                        selectedTabIndex !== -1 &&
+                        editorRef[selectedTabIndex]
+                    ) {
+                        editorRef[selectedTabIndex]
+                            .save()
+                            .then(() => {
+                                setTabs(selectedTabIndex, "dirty", false);
+                            })
+                            .catch();
+                    }
+                }
+            }}
         >
             <ContextMenu ref={context} />
             <div
                 style={{
                     width: "200px",
+                    "flex-shrink": 0,
                     display: "flex",
                     "flex-direction": "column",
                     "align-content": "stretch",
@@ -207,12 +230,13 @@ const App: Component = () => {
                     }}
                 />
             </div>
-            <div style={{ "flex-grow": 1 }}>
+            <div style={{ flex: 1 }}>
                 <Tabs state={tabs} setState={setTabs} />
 
                 <For each={tabs}>
-                    {(item) => (
+                    {(item, index) => (
                         <MyCustomMonaco
+                            ref={editorRef[index()]}
                             item={item}
                             setTabs={setTabs}
                             options={{
