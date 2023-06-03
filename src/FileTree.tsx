@@ -1,5 +1,5 @@
 import { For, mergeProps, createEffect, createMemo, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, produce } from "solid-js/store";
 import { css } from "solid-styled-components";
 
 export type FileItem = {
@@ -50,6 +50,7 @@ export default function FileTree(props) {
                 state={tree()}
                 setState={props.setState}
                 onSelectItem={props.onSelectItem}
+                onDblClickItem={props.onDblClickItem}
             />
         </div>
     );
@@ -78,6 +79,14 @@ function List(props) {
                                 true
                             );
                             if (item.type == "file") props.onSelectItem?.(item);
+                        }}
+                        onDblClick={(e) => {
+                            console.log("dblclick div");
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (item.type == "file") {
+                                props.onDblClickItem?.(item);
+                            }
                         }}
                         class={
                             css`
@@ -110,6 +119,7 @@ function List(props) {
                             state={item.children}
                             setState={props.setState}
                             onSelectItem={props.onSelectItem}
+                            onDblClickItem={props.onDblClickItem}
                         />
                     </Show>
                 </>

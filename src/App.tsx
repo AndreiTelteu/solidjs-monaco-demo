@@ -1,4 +1,4 @@
-import { Component, createSignal, onMount } from "solid-js";
+import { Component, createSignal, For, Index, onMount, Show } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 
 // @ts-ignore
@@ -9,9 +9,6 @@ import Tabs, { TabItem } from "./Tabs";
 
 const App: Component = () => {
     let context: ContextRef;
-    const [value, setValue] = createSignal(`<?php
-phpinfo();
-`);
     const defaultFileAttrs = { open: false, selected: false };
     const [files, setFiles] = createStore<FileItem[]>([
         { type: "dir", name: "src", path: "src/", ...defaultFileAttrs },
@@ -171,7 +168,6 @@ phpinfo();
                                 );
                                 if (alreadyOpened !== -1) {
                                     v[alreadyOpened].selected = true;
-                                    // TODO: doubleclick should make fixed true here
                                     return;
                                 }
                                 let notFixedItem = v.findIndex(
@@ -183,6 +179,7 @@ phpinfo();
                                         path: item.path,
                                         selected: true,
                                         fixed: false,
+                                        dirty: false,
                                     };
                                     return;
                                 }
@@ -191,7 +188,20 @@ phpinfo();
                                     path: item.path,
                                     selected: true,
                                     fixed: false,
+                                    dirty: false,
                                 });
+                            })
+                        );
+                    }}
+                    onDblClickItem={(item: FileItem) => {
+                        console.log("dbll click", item);
+                        setTabs({}, "selected", false);
+                        setTabs(
+                            (i) => i.path == item.path,
+                            produce((i) => {
+                                i.fixed = true;
+                                i.selected = true;
+                                return i;
                             })
                         );
                     }}
@@ -199,16 +209,21 @@ phpinfo();
             </div>
             <div style={{ "flex-grow": 1 }}>
                 <Tabs state={tabs} setState={setTabs} />
-                <MyCustomMonaco
-                    value={value}
-                    options={{
-                        value: value(),
-                        theme: "vs-dark",
-                        minimap: {
-                            enabled: true,
-                        },
-                    }}
-                />
+
+                <For each={tabs}>
+                    {(item) => (
+                        <MyCustomMonaco
+                            item={item}
+                            setTabs={setTabs}
+                            options={{
+                                theme: "vs-dark",
+                                minimap: {
+                                    enabled: true,
+                                },
+                            }}
+                        />
+                    )}
+                </For>
             </div>
         </div>
     );

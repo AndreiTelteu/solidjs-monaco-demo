@@ -7,6 +7,7 @@ export type TabItem = {
     path: string;
     selected: boolean;
     fixed: boolean;
+    dirty: boolean;
 };
 
 export default function Tabs(props: {
@@ -19,6 +20,9 @@ export default function Tabs(props: {
                 <For each={props.state}>
                     {(item) => (
                         <TabItemElement
+                            class={`tab-item-element ${
+                                item.selected ? "is-selected" : ""
+                            }`}
                             selected={item.selected}
                             onClick={(e) => {
                                 props.setState({}, "selected", false);
@@ -40,7 +44,22 @@ export default function Tabs(props: {
                                 );
                             }}
                         >
-                            {item.name}
+                            {item.name}-{item.fixed ? "F" : "!f"}-
+                            {item.dirty ? "D" : "!d"}
+                            <TabClose
+                                onClick={() => {
+                                    props.setState(
+                                        produce((v: TabItem[]) => {
+                                            let index = v.findIndex(
+                                                (i) => i.path == item.path
+                                            );
+                                            if (index !== -1) {
+                                                v.splice(index, 1);
+                                            }
+                                        })
+                                    );
+                                }}
+                            />
                         </TabItemElement>
                     )}
                 </For>
@@ -70,3 +89,27 @@ export const TabItemElement = styled("button")(
             : {}),
     })
 );
+
+export const TabClose = styled("button")({
+    appearance: "none",
+    display: "inline-block",
+    marginRight: "-4px",
+    marginLeft: "4px",
+    padding: "0 4px",
+    border: "none",
+    borderRadius: "6px",
+    background: "rgba(255, 255, 255, 0)",
+    color: "var(--vscode-foreground)",
+    opacity: 0,
+    "&::before": {
+        content: `' \\2716'`,
+        fontSize: "14px",
+    },
+    "&:hover": {
+        background: "rgba(255, 255, 255, 0.15)",
+        color: "#fff",
+    },
+    [`.tab-item-element:hover &, .tab-item-element.is-selected &`]: {
+        opacity: 1,
+    },
+});
