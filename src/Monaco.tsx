@@ -33,15 +33,12 @@ export type EditorRef = {
 
 export default function Monaco(props) {
     props = mergeProps({ options: {}, value: "", showActionBar: true }, props);
-    let editorObj;
+    let editorObj: monaco.editor.IStandaloneCodeEditor;
     let editorRef;
     const [content, setContent] = createSignal<string>();
     let langs = monaco.languages.getLanguages();
 
     onMount(() => {
-        // props.options.language =
-        //     (props?.item?.path && detectLanguage(props?.item?.path)) ||
-        //     "plaintext"; // not needed since createModel detects from uri
         props.options.model =
             monaco.editor.getModel(
                 monaco.Uri.parse("file:///" + props?.item?.path)
@@ -87,26 +84,12 @@ export default function Monaco(props) {
         });
     });
 
-    const detectLanguage = (path, defaultVal = null) => {
-        let filename = path.split("/").pop();
-        for (const i in langs || []) {
-            for (const j in langs[i]?.extensions || []) {
-                if (
-                    filename.indexOf(langs[i].extensions[j]) !== -1 &&
-                    filename.indexOf(langs[i].extensions[j]) ==
-                        filename.length - langs[i].extensions[j].length
-                ) {
-                    return langs[i].id;
-                }
-            }
-        }
-        return defaultVal;
-    };
-
     createEffect(() => {
         content?.();
-        if (!props.item.dirty) {
+        if (!props.item?.dirty) {
+            let state = editorObj.saveViewState();
             editorObj.setValue(content?.() || "");
+            editorObj.restoreViewState(state);
         }
     });
 
@@ -116,7 +99,9 @@ export default function Monaco(props) {
             console.log("selected ! fetch new content !!!", props?.item?.path);
             fileService
                 .open(props?.item?.path)
-                .then((response) => setContent(response))
+                .then((response) => {
+                    if (response !== content()) setContent(response);
+                })
                 .catch((err) => setContent(err.error));
         }
     });
