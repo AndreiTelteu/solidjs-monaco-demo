@@ -3,19 +3,56 @@ import * as monaco from "monaco-editor";
 import { produce } from "solid-js/store";
 import fileService from "./fileService";
 
+import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
+import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
+import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
+import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+
+self.MonacoEnvironment = {
+    getWorker(_, label) {
+        if (label === "json") {
+            return new jsonWorker();
+        }
+        if (label === "css" || label === "scss" || label === "less") {
+            return new cssWorker();
+        }
+        if (label === "html" || label === "handlebars" || label === "razor") {
+            return new htmlWorker();
+        }
+        if (label === "typescript" || label === "javascript") {
+            return new tsWorker();
+        }
+        return new editorWorker();
+    },
+};
+
 export type EditorRef = {
     save: () => Promise<boolean>;
 };
 
 export default function Monaco(props) {
     props = mergeProps({ options: {}, value: "", showActionBar: true }, props);
+    let editorObj;
+    let editorRef;
     const [content, setContent] = createSignal<string>();
+    let langs = monaco.languages.getLanguages();
 
     onMount(() => {
+        // props.options.language =
+        //     (props?.item?.path && detectLanguage(props?.item?.path)) ||
+        //     "plaintext"; // not needed since createModel detects from uri
+        props.options.model =
+            monaco.editor.getModel(
+                monaco.Uri.parse("file:///" + props?.item?.path)
+            ) ||
+            monaco.editor.createModel(
+                content(),
+                undefined,
+                monaco.Uri.parse("file:///" + props?.item?.path)
+            );
         editorObj = monaco.editor.create(editorRef, props.options);
-        let langs = monaco.languages.getLanguages();
-        monaco.editor.setModelLanguage(editorObj.getModel(), "php");
-        // console.log('langs', langs)
+
         editorObj.updateOptions({
             fontSize: 16,
         });
@@ -50,6 +87,22 @@ export default function Monaco(props) {
         });
     });
 
+    const detectLanguage = (path, defaultVal = null) => {
+        let filename = path.split("/").pop();
+        for (const i in langs || []) {
+            for (const j in langs[i]?.extensions || []) {
+                if (
+                    filename.indexOf(langs[i].extensions[j]) !== -1 &&
+                    filename.indexOf(langs[i].extensions[j]) ==
+                        filename.length - langs[i].extensions[j].length
+                ) {
+                    return langs[i].id;
+                }
+            }
+        }
+        return defaultVal;
+    };
+
     createEffect(() => {
         content?.();
         if (!props.item.dirty) {
@@ -76,8 +129,6 @@ export default function Monaco(props) {
         });
     }
 
-    let editorObj;
-    let editorRef;
     return (
         <div
             ref={editorRef}

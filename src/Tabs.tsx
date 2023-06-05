@@ -41,11 +41,13 @@ export default function Tabs(props: {
                                 item.dirty ? "is-dirty" : ""
                             }`}
                             onAuxClick={(e) => {
-                                // middle click close tab
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                                close(item, index());
+                                if (e.which == 2) {
+                                    // middle click close tab
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    e.stopImmediatePropagation();
+                                    close(item, index());
+                                }
                             }}
                             onClick={(e) => {
                                 if (e.which == 2) {
